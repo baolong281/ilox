@@ -43,7 +43,7 @@ impl fmt::Display for ScannerError {
 }
 
 #[derive(Debug, Clone)]
-enum TokenType {
+pub enum TokenType {
     // Single-character tokens
     LeftParen,
     RightParen,
@@ -94,10 +94,20 @@ enum TokenType {
 }
 
 #[derive(Debug, Clone)]
-enum Literal {
+pub enum LiteralValue {
     Number(f64),
     Str(String),
     Nil,
+}
+
+impl fmt::Display for LiteralValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            LiteralValue::Number(n) => write!(f, "{}", n),
+            LiteralValue::Str(s) => write!(f, "\"{}\"", s),
+            LiteralValue::Nil => write!(f, "nil"),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -105,7 +115,29 @@ pub struct Token {
     token_type: TokenType,
     lexeme: String,
     line: usize,
-    value: Option<Literal>,
+    value: Option<LiteralValue>,
+}
+
+impl Token {
+    pub fn new(
+        token_type: TokenType,
+        lexeme: String,
+        line: usize,
+        value: Option<LiteralValue>,
+    ) -> Self {
+        Self {
+            token_type,
+            lexeme,
+            line,
+            value,
+        }
+    }
+}
+
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.lexeme)
+    }
 }
 
 pub struct Scanner {
@@ -218,7 +250,7 @@ impl Scanner {
         if let Some(token_type) = KEYWORDS.get(value.as_str()) {
             self.emit(token_type.clone(), None);
         } else {
-            self.emit(TokenType::Identifier, Some(Literal::Str(value)));
+            self.emit(TokenType::Identifier, Some(LiteralValue::Str(value)));
         }
     }
 
@@ -246,7 +278,7 @@ impl Scanner {
         let value = self.source[self.start..self.current]
             .parse::<f64>()
             .unwrap();
-        self.emit(TokenType::Number, Some(Literal::Number(value)));
+        self.emit(TokenType::Number, Some(LiteralValue::Number(value)));
     }
 
     fn scan_string(&mut self) {
@@ -263,7 +295,7 @@ impl Scanner {
 
         self.advance();
         let value = self.source[self.start + 1..self.current - 1].to_string();
-        self.emit(TokenType::String, Some(Literal::Str(value)));
+        self.emit(TokenType::String, Some(LiteralValue::Str(value)));
     }
 
     fn scan_slash(&mut self) {
@@ -296,7 +328,7 @@ impl Scanner {
         false
     }
 
-    fn emit(&mut self, token_type: TokenType, value: Option<Literal>) {
+    fn emit(&mut self, token_type: TokenType, value: Option<LiteralValue>) {
         let lexeme = self.source[self.start..self.current].to_string();
         let line = self.line;
         self.tokens.push(ScannerResult::Token(Token {
