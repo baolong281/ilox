@@ -11,7 +11,7 @@ pub trait ExprVisitor {
     fn visit_unary(&mut self, expr: &Unary) -> Self::Output;
 }
 
-struct AstPrinter;
+pub struct AstPrinter;
 
 impl AstPrinter {
     pub fn print(expr: &Expression) -> String {
@@ -66,23 +66,41 @@ impl Visitable for Expression {
     }
 }
 
-struct Binary {
+pub struct Binary {
     left: Box<Expression>,
     op: Token,
     right: Box<Expression>,
 }
 
-struct Grouping {
+impl Binary {
+    pub fn new(left: Box<Expression>, op: Token, right: Box<Expression>) -> Self {
+        Self { left, op, right }
+    }
+}
+
+pub struct Grouping {
     expr: Box<Expression>,
 }
 
-struct Literal {
+pub struct Literal {
     value: LiteralValue,
 }
 
-struct Unary {
+impl Literal {
+    pub fn new(value: LiteralValue) -> Self {
+        Self { value }
+    }
+}
+
+pub struct Unary {
     op: Token,
     right: Box<Expression>,
+}
+
+impl Unary {
+    pub fn new(op: Token, right: Box<Expression>) -> Self {
+        Self { op, right }
+    }
 }
 
 #[cfg(test)]
